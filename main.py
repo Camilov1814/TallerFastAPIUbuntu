@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 
 app = FastAPI()
-models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine) # Crear las tablas en la base de datos
 
 # Pydantic schema para la respuesta
 class StockItem(BaseModel):
@@ -22,8 +22,10 @@ class StockItem(BaseModel):
     volume: int
 
     class Config:
-        orm_mode = True  # Para convertir el modelo SQLAlchemy a Pydantic
+        # orm_mode = True  # Para convertir el modelo SQLAlchemy a Pydantic
+        from_attributes = True
 
+# Pydantic schema para la petición
 class Item(BaseModel):
     name: str
     description: Optional[str] = None
@@ -31,7 +33,8 @@ class Item(BaseModel):
     tax: Optional[float] = None
 
     class Config:
-        orm_mode = True
+        # orm_mode = True
+        from_attributes = True
 
 # Función para obtener la sesión de la base de datos
 def get_db():
@@ -43,11 +46,12 @@ def get_db():
 
 
 db_dependency = Annotated[Session, Depends(get_db)]
+
 # Endpoint GET con filtros y paginación
 @app.get("/stocks/")
 async def get_stocks(
     db: db_dependency,
-    skip: int = 0,
+    page: int = 1,
     limit: int = 100,
     date_from: Optional[date] = Query(None, description="Filtrar desde esta fecha"),
     date_to: Optional[date] = Query(None, description="Filtrar hasta esta fecha")
@@ -61,8 +65,10 @@ async def get_stocks(
     if date_to:
         query = query.filter(models.StockData.date <= date_to)
 
+    page = page * limit - limit
+
     # Paginación
-    stocks = query.offset(skip).limit(limit).all()
+    stocks = query.offset(page).limit(limit).all()
 
     return stocks
 
