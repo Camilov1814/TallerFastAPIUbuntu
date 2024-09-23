@@ -56,6 +56,13 @@ async def get_stocks(
     date_from: Optional[date] = Query(None, description="Filtrar desde esta fecha"),
     date_to: Optional[date] = Query(None, description="Filtrar hasta esta fecha")
 ):
+    
+    # Validar los parámetros de paginación 400 - Bad Request
+    if page < 1:
+        raise HTTPException(status_code=400, detail="El número de página debe ser mayor o igual a 1")
+    if limit < 1:
+        raise HTTPException(status_code=400, detail="El límite debe ser mayor o igual a 1")
+
     # Iniciar la consulta
     query = db.query(models.StockData)
 
@@ -65,10 +72,22 @@ async def get_stocks(
     if date_to:
         query = query.filter(models.StockData.date <= date_to)
 
-    page = page * limit - limit
+    total_records = query.count()
+    max_pages = (total_records + limit - 1) // limit  # Redondear hacia arriba
+    # Verificar si la página solicitada está fuera de rango
+    if page > max_pages:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"La página solicitada {page} está fuera del rango. Solo hay {max_pages} páginas disponibles."
+        )
+
+    page = (page - 1) * limit
 
     # Paginación
     stocks = query.offset(page).limit(limit).all()
+
+    if not stocks:
+        raise HTTPException(status_code=404, detail="No se encontraron datos para los filtros proporcionados")
 
     return stocks
 
