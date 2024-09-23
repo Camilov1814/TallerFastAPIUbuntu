@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, Float, Date
 from database import Base
 
-class StockData(Base):
-    __tablename__ = 'stock_data'  # Nombre de tu tabla
 
-    id = Column(Integer, primary_key=True, index=True)
-    date = Column(Date, nullable=False)
+class StockData(Base):
+    __tablename__ = 'appl'  # Nombre de tu tabla
+
+    date = Column(Date, primary_key=True, index=True)
     open = Column(Float, nullable=False)
     high = Column(Float, nullable=False)
     low = Column(Float, nullable=False)
