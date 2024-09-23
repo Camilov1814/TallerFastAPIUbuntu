@@ -24,14 +24,7 @@ class StockItem(BaseModel):
     class Config:
         orm_mode = True  # Para convertir el modelo SQLAlchemy a Pydantic
 
-class Item(BaseModel):
-    name: str
-    description: Optional[str] = None
-    price: float
-    tax: Optional[float] = None
 
-    class Config:
-        orm_mode = True
 
 # Función para obtener la sesión de la base de datos
 def get_db():
@@ -65,11 +58,3 @@ async def get_stocks(
     stocks = query.offset(skip).limit(limit).all()
 
     return stocks
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, query: str = None):
-    return {"item_id": item_id, "query": query}
-
-@app.post("/items/")
-def create_item(item: Item):
-    return {"name": item.name, "description": item.description, "price": item.price}
