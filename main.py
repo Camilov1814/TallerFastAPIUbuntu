@@ -41,6 +41,7 @@ def get_db():
     finally:
         db.close()
 
+
 db_dependency = Annotated[Session, Depends(get_db)]
 # Endpoint GET con filtros y paginación
 @app.get("/stocks/")
