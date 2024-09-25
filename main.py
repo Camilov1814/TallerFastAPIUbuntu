@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi.responses import JSONResponse
+from psycopg2 import IntegrityError
 from pydantic import BaseModel
 from typing import List, Annotated, Optional
 from datetime import date
@@ -12,12 +14,12 @@ app = FastAPI()
 models.Base.metadata.create_all(bind=engine) # Crear las tablas en la base de datos
 
 # Pydantic schema para la respuesta
-class StockItem(BaseModel):
-    date: date
-    open: float
-    high: float
-    low: float
+class StockData(BaseModel):
     close: float
+    low: float
+    open: float
+    date: date  
+    high: float
     adj_close: float
     volume: int
 
@@ -79,3 +81,35 @@ async def get_stocks(
         raise HTTPException(status_code=404, detail="No se encontraron datos para los filtros proporcionados")
 
     return stocks
+
+
+@app.post("/stocks/")
+async def create_stock_data(stock_data: list[StockData]):
+    db = SessionLocal()
+    created_count = 0
+
+    for stock in stock_data:
+        stock_entry = models.StockData(
+            close=stock.close,
+            low=stock.low,
+            open=stock.open,
+            date=stock.date,
+            high=stock.high,
+            adj_close=stock.adj_close,
+            volume=stock.volume
+        )
+        try:
+            db.add(stock_entry)
+            db.commit()
+            created_count += 1
+        except IntegrityError:
+            db.rollback()  # Deshacer cambios en caso de error
+            continue
+
+    total_count = db.query(models.StockData).count()  # Total de registros en la base de datos
+    db.close()
+
+    return JSONResponse(content={
+        "created_count": created_count,
+        "total_count": total_count
+    })
