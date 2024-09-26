@@ -84,7 +84,7 @@ async def get_stocks(
 
 
 @app.post("/stocks/")
-async def create_stock_data(stock_data: list[StockData]):
+async def create_stock_data(stock_data: list[StockData]):#BaseModel Pydantic
     db = SessionLocal()
     created_count = 0
 
