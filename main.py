@@ -38,7 +38,10 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+
+
 # Endpoint GET con filtros y paginación
+#############################################################################################
 @app.get("/stocks/")
 async def get_stocks(
     db: db_dependency,
@@ -83,12 +86,24 @@ async def get_stocks(
     return stocks
 
 
+
+# Endpoint POST para crear datos de acciones
+#############################################################################################
 @app.post("/stocks/")
 async def create_stock_data(stock_data: list[StockData]):#BaseModel Pydantic
     db = SessionLocal()
     created_count = 0
 
     for stock in stock_data:
+        # Verificar si ya existe una acción con la misma fecha
+        existing_stock = db.query(models.StockData).filter(models.StockData.date == stock.date).first()
+        if existing_stock:
+            raise HTTPException(
+                status_code=409,  # Código de estado HTTP 409 Conflict
+                detail=f"La acción con la fecha {stock.date} ya existe en la base de datos Se agregaron {created_count} elementos a la base de datos.",
+            )
+
+        # Creación de un objeto de la clase StockData
         stock_entry = models.StockData(
             close=stock.close,
             low=stock.low,
