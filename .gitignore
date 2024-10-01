@@ -2,4 +2,6 @@
 venv/
 # Ignore compiled Python files
 *.pyc
-.env
+.en
+
+venvWSL/
